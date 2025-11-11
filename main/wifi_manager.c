@@ -38,6 +38,23 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         if (s_wifi_event_group) {
             xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
         }
+        
+        // Enable promiscuous mode for CSI packet reception
+        // This improves CSI reception on all chips
+        wifi_promiscuous_filter_t filter = {
+            .filter_mask = WIFI_PROMIS_FILTER_MASK_MGMT | WIFI_PROMIS_FILTER_MASK_DATA
+        };
+        esp_err_t ret = esp_wifi_set_promiscuous_filter(&filter);
+        if (ret == ESP_OK) {
+            ret = esp_wifi_set_promiscuous(true);
+            if (ret == ESP_OK) {
+                ESP_LOGI(TAG, "✅ Promiscuous mode enabled for CSI reception");
+            } else {
+                ESP_LOGW(TAG, "⚠️  Failed to enable promiscuous mode: %s", esp_err_to_name(ret));
+            }
+        } else {
+            ESP_LOGW(TAG, "⚠️  Failed to set promiscuous filter: %s", esp_err_to_name(ret));
+        }
     }
 }
 
